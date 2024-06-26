@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Het grote Janssen spel!</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+body{font-family:'Roboto',sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+#game-container{width:800px;height:400px;position:relative;overflow:hidden;border-radius:10px;box-shadow:0 0 20px rgba(0,0,0,0.3);display:flex}
+.player-area{width:400px;height:400px;position:relative}
+#player1-area{border-right:2px solid #fff}
+.player-area.space{background-color:#000033}.player-area.ocean{background-color:#006994}.player-area.forest{background-color:#228B22}
+.object,.power-up{position:absolute;cursor:pointer}
+.object{width:50px;height:50px;transition:all 0.3s ease}
+.power-up{width:30px;height:30px;border-radius:50%}
+.score,.timer,.high-score,.difficulty,.player-name{position:absolute;font-size:16px;color:white;background-color:rgba(0,0,0,0.5);padding:5px;border-radius:5px}
+.score{top:10px;left:10px}.timer{top:10px;right:10px}.high-score{bottom:10px;left:10px}.difficulty{bottom:10px;right:10px}.player-name{top:40px;left:10px}
+#start-screen,#name-screen,#instructions-screen,#end-screen{position:absolute;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.8);display:flex;flex-direction:column;justify-content:center;align-items:center;color:white}
+#name-screen,#instructions-screen,#end-screen{display:none}
+#start-screen{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);animation:gradientBG 15s ease infinite}
+@keyframes gradientBG{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+#start-screen h1{font-size:48px;margin-bottom:30px;text-shadow:2px 2px 4px rgba(0,0,0,0.5);animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+button,select,input{margin:10px;padding:10px 20px;font-size:18px;border:none;border-radius:25px;cursor:pointer;transition:all 0.3s ease}
+button{background-color:#4CAF50;color:white}
+button:hover{background-color:#45a049;transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.2)}
+select,input{background-color:white;color:#333}
+#instructions{width:80%;text-align:left;margin-bottom:20px}
+.start-buttons{display:flex;flex-direction:column;align-items:center}
+.start-buttons button{width:200px;margin:10px}
+#end-screen{background:linear-gradient(45deg,#ff9a9e 0%,#fad0c4 99%,#fad0c4 100%);animation:gradientBG 15s ease infinite}
+#end-screen h2{font-size:36px;margin-bottom:20px;text-shadow:2px 2px 4px rgba(0,0,0,0.3)}
+.confetti{position:absolute;width:10px;height:10px;opacity:0.7;animation:confetti-fall 3s ease-out infinite}
+@keyframes confetti-fall{0%{transform:translateY(-100%) rotate(0deg)}100%{transform:translateY(100vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="player1-area" class="player-area"><div class="score">Score: 0</div><div class="timer">Tijd: 30</div><div class="high-score">Hoogste Score: 0</div><div class="difficulty">Niveau: 1</div><div class="player-name"></div></div>
+<div id="player2-area" class="player-area" style="display:none"><div class="score">Score: 0</div><div class="timer">Tijd: 30</div><div class="high-score">Hoogste Score: 0</div><div class="difficulty">Niveau: 1</div><div class="player-name"></div></div>
+<div id="start-screen"><h1>Het grote Janssen spel!</h1><div class="start-buttons"><button id="one-player">Eén Speler</button><button id="two-player">Twee Spelers</button></div></div>
+<div id="name-screen"><h2>Voer Spelernamen In</h2><select id="theme-select"><option value="space">Ruimte</option><option value="ocean">Oceaan</option><option value="forest">Bos</option></select><input type="text" id="player1-name" placeholder="Naam Speler 1"><input type="text" id="player2-name" placeholder="Naam Speler 2" style="display:none"><button id="show-instructions">Toon Instructies</button></div>
+<div id="instructions-screen"><h2>Spelregels</h2><div id="instructions"><p>1. Klik zo snel mogelijk op de bewegende objecten om punten te scoren.</p><p>2. Je hebt 30 seconden om zoveel mogelijk punten te verzamelen.</p><p>3. Gouden power-ups geven je 5 extra punten.</p><p>4. Zilveren power-ups voegen 5 seconden toe aan je speeltijd.</p><p>5. Het spel wordt moeilijker naarmate je meer punten scoort.</p><p>6. Probeer je hoogste score te verbeteren!</p></div><button id="start-game">Start Spel</button></div>
+<div id="end-screen"><h2>Spel Voorbij!</h2><div id="final-scores"></div><button id="play-again">Speel Opnieuw</button></div>
+</div>
+<script>
+const gameContainer=document.getElementById('game-container'),player1Area=document.getElementById('player1-area'),player2Area=document.getElementById('player2-area'),startScreen=document.getElementById('start-screen'),nameScreen=document.getElementById('name-screen'),instructionsScreen=document.getElementById('instructions-screen'),themeSelect=document.getElementById('theme-select'),onePlayerBtn=document.getElementById('one-player'),twoPlayerBtn=document.getElementById('two-player'),player1NameInput=document.getElementById('player1-name'),player2NameInput=document.getElementById('player2-name'),showInstructionsBtn=document.getElementById('show-instructions'),startGameBtn=document.getElementById('start-game');
+let players=[],gameMode='one-player',theme='space',gameInterval;
+class Player{constructor(e){this.area=e,this.object=this.createObject(),this.powerUp=null,this.score=0,this.highScore=0,this.timeLeft=30,this.difficulty=1,this.objectSize=50,this.scoreElement=e.querySelector('.score'),this.timerElement=e.querySelector('.timer'),this.highScoreElement=e.querySelector('.high-score'),this.difficultyElement=e.querySelector('.difficulty'),this.nameElement=e.querySelector('.player-name')}createObject(){const e=document.createElement('div');return e.classList.add('object'),this.updateObjectAppearance(e),this.area.appendChild(e),e}updateObjectAppearance(e){const t={'space':'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 51 48\'%3E%3Cpath fill=\'%23FFD700\' stroke=\'%23000\' d=\'m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z\'/%3E%3C/svg%3E")','ocean':'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Cpath fill=\'%230000FF\' d=\'M50 95C24.6 95 4 74.4 4 49S24.6 3 50 3s46 20.6 46 46-20.6 46-46 46zm0-10c19.9 0 36-16.1 36-36S69.9 13 50 13 14 29.1 14 49s16.1 36 36 36z\'/%3E%3Cpath fill=\'%230000FF\' d=\'M50 35l-25 30h50z\'/%3E%3C/svg%3E")','forest':'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Cpath fill=\'%23008000\' d=\'M50 5L20 80h60z\'/%3E%3Crect fill=\'%23654321\' x=\'45\' y=\'80\' width=\'10\' height=\'15\'/%3E%3C/svg%3E")'};e.style.backgroundImage=t[theme],e.style.backgroundSize='contain',e.style.backgroundRepeat='no-repeat',e.style.backgroundPosition='center'}moveObject(){const e=this.area.clientWidth-this.objectSize,t=this.area.clientHeight-this.objectSize,i=Math.floor(Math.random()*e),s=Math.floor(Math.random()*t);this.object.style.left=`${i}px`,this.object.style.top=`${s}px`}updateScore(){this.score++,this.scoreElement.textContent=`Score: ${this.score}`,playSound('click'),this.score>this.highScore&&(this.highScore=this.score,this.highScoreElement.textContent=`Hoogste Score: ${this.highScore}`),this.updateDifficulty()}updateDifficulty(){this.difficulty=Math.floor(this.score/5)+1,this.difficultyElement.textContent=`Niveau: ${this.difficulty}`,this.objectSize=Math.max(30,50-2*this.difficulty),this.object.style.width=`${this.objectSize}px`,this.object.style.height=`${this.objectSize}px`}updateTimer(){this.timeLeft--,this.timerElement.textContent=`Tijd: ${this.timeLeft}`,0===this.timeLeft&&endGame()}resetGame(){this.score=0,this.timeLeft=30,this.difficulty=1,this.objectSize=50,this.scoreElement.textContent='Score: 0',this.timerElement.textContent='Tijd: 30',this.difficultyElement.textContent='Niveau: 1',this.object.style.width='50px',this.object.style.height='50px',this.powerUp&&(this.area.removeChild(this.powerUp),this.powerUp=null)}createPowerUp(){if(Math.random()<.1&&!this.powerUp){this.powerUp=document.createElement('div'),this.powerUp.classList.add('power-up'),this.powerUp.style.backgroundColor=Math.random()<.5?'gold':'silver';const e=this.area.clientWidth-30,t=this.area.clientHeight-30;this.powerUp.style.left=`${Math.floor(Math.random()*e)}px`,this.powerUp.style.top=`${Math.floor(Math.random()*t)}px`,this.area.appendChild(this.powerUp),this.powerUp.addEventListener('click',()=>{'gold'===this.powerUp.style.backgroundColor?this.score+=5:this.timeLeft+=5,this.area.removeChild(this.powerUp),this.powerUp=null,playSound('powerup'),this.updateScore()})}}setName(e){this.nameElement.textContent=e||'Anoniem'}}
+function startGame(){instructionsScreen.style.display='none',theme=themeSelect.value,player1Area.className=`player-area ${theme}`,player2Area.className=`player-area ${theme}`,players=[new Player(player1Area)],'two-player'===gameMode?(players.push(new Player(player2Area)),player2Area.style.display='block'):player2Area.style.display='none',players.forEach((e,t)=>{e.resetGame(),e.moveObject(),e.updateObjectAppearance(e.object),e.object.addEventListener('click',()=>{e.updateScore(),e.moveObject(),e.createPowerUp()}),e.setName(0===t?player1NameInput.value:player2NameInput.value)}),gameInterval=setInterval(()=>{players.forEach(e=>e.updateTimer())},1e3)}
+function endGame(){clearInterval(gameInterval),playSound('end');const e=document.getElementById('end-screen'),t=document.getElementById('final-scores');let n='';n='two-player'===gameMode?`${players[0].nameElement.textContent}: ${players[0].score}<br>${players[1].nameElement.textContent}: ${players[1].score}`:`${players[0].nameElement.textContent}'s score: ${players[0].score}`,t.innerHTML=n,e.style.display='flex';for(let e=0;e<50;e++)createConfetti()}
+function createConfetti(){const e=document.createElement('div');e.classList.add('confetti'),e.style.left=100*Math.random()+'vw',e.style.animationDuration=3*Math.random()+2+'s',e.style.backgroundColor=getRandomColor(),document.body.appendChild(e),setTimeout(()=>{e.remove()},5e3)}
+function getRandomColor(){return['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff'][Math.floor(6*Math.random())]}
+function playSound(e){let t;switch(e){case'click':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUA");break;case'powerup':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUB");break;case'end':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUC"+"C".repeat(1000))}t.play()}
+document.getElementById('play-again').addEventListener('click',()=>{document.getElementById('end-screen').style.display='none',startScreen.style.display='flex'});
+onePlayerBtn.addEventListener('click',()=>{gameMode='one-player',startScreen.style.display='none',nameScreen.style.display='flex',player2NameInput.style.display='none'});
+twoPlayerBtn.addEventListener('click',()=>{gameMode='two-player',startScreen.style.display='none',nameScreen.style.display='flex',player2NameInput.style.display='inline-block'});
+showInstructionsBtn.addEventListener('click',()=>{nameScreen.style.display='none',instructionsScreen.style.display='flex'});
+startGameBtn.addEventListener('click',startGame);
+themeSelect.addEventListener('change',()=>{theme=themeSelect.value,player1Area.className=`player-area ${theme}`,player2Area.className=`player-area ${theme}`});
+</script>
+</body>
+</html>
