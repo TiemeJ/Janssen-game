@@ -52,7 +52,21 @@ function startGame(){instructionsScreen.style.display='none',theme=themeSelect.v
 function endGame(){clearInterval(gameInterval),playSound('end');const e=document.getElementById('end-screen'),t=document.getElementById('final-scores');let n='';n='two-player'===gameMode?`${players[0].nameElement.textContent}: ${players[0].score}<br>${players[1].nameElement.textContent}: ${players[1].score}`:`${players[0].nameElement.textContent}'s score: ${players[0].score}`,t.innerHTML=n,e.style.display='flex';for(let e=0;e<50;e++)createConfetti()}
 function createConfetti(){const e=document.createElement('div');e.classList.add('confetti'),e.style.left=100*Math.random()+'vw',e.style.animationDuration=3*Math.random()+2+'s',e.style.backgroundColor=getRandomColor(),document.body.appendChild(e),setTimeout(()=>{e.remove()},5e3)}
 function getRandomColor(){return['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff'][Math.floor(6*Math.random())]}
-function playSound(e){let t;switch(e){case'click':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUA");break;case'powerup':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUB");break;case'end':t=new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUC"+"C".repeat(1000))}t.play()}
+function playSound(type) {
+    let sound;
+    switch (type) {
+        case 'click':
+            sound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAAAAAAAAAAAAAAwA==");
+            break;
+        case 'powerup':
+            sound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAB/f39/AAA=");
+            break;
+        case 'end':
+            sound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAB/f39/f38=");
+            break;
+    }
+    sound.play().catch(e => console.error("Error playing sound:", e));
+}
 document.getElementById('play-again').addEventListener('click',()=>{document.getElementById('end-screen').style.display='none',startScreen.style.display='flex'});
 onePlayerBtn.addEventListener('click',()=>{gameMode='one-player',startScreen.style.display='none',nameScreen.style.display='flex',player2NameInput.style.display='none'});
 twoPlayerBtn.addEventListener('click',()=>{gameMode='two-player',startScreen.style.display='none',nameScreen.style.display='flex',player2NameInput.style.display='inline-block'});
